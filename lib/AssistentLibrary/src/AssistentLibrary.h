@@ -22,7 +22,12 @@ typedef AssistentVariable (*HandlerCMDRec)();
 
 class AssistenWiFi
 {
+#ifdef ASSISTENT_OTA
+  const bool OTA = true;
+#else
+  const bool OTA = false;
 
+#endif
   unsigned long lastExecutionTime = 0;
   char *hostname = "";
   String PlatName;

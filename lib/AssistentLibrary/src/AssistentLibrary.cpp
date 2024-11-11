@@ -106,7 +106,7 @@ void AssistenWiFi::hexStringToByteArray(const String &hexStr, byte *byteArray)
   for (int i = 0; i < hexStr.length(); i += 2)
   {
     String byteString = hexStr.substring(i, i + 2);
-    byteArray[i / 2] = strtol(byteString.c_str(), NULL, 16); 
+    byteArray[i / 2] = strtol(byteString.c_str(), NULL, 16);
   }
 }
 #ifdef ASSISTENT_OTA
@@ -134,7 +134,7 @@ void AssistenWiFi::ReadOTA()
     ASSISTENT_debugln("Обновление успешно, перезагрузка...");
     webServer.send(200, "text/plain", "Update Successful");
     delay(100);
-    ESP.restart(); 
+    ESP.restart();
     break;
   }
 }
@@ -160,7 +160,8 @@ String AssistenWiFi::ThisStandartCommand(String str)
 
     ASSISTENT_debug("DEBUG : ");
     String msg(this->PlatName);
-
+    msg += '.';
+    msg += OTA ? "1" : "0";
     // Command non send message
     for (int i = 0; i < SizeCMD; i++)
     {
