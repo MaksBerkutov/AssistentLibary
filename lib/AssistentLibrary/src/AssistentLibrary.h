@@ -1,18 +1,29 @@
+
 #ifndef Assistent_h
 #define Assistent_h
 // CFG
 #define ASSISTENT_DEBUG
-#define ASSISTENT_OTA
+// #define ASSISTENT_OTA
 
+#include <ArduinoJson.h>
+#ifdef ESP32
+#include <HTTPClient.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#else
+#include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <ArduinoJson.h>
-#include <ESP8266HTTPClient.h>
+#endif
 #include <AssistentAES.h>
 #include <EEPROM.h>
 #include <AssistentVariable.h>
 #ifdef ASSISTENT_OTA
+#ifdef ESP32
+#include <HTTPUpdate.h>
+#else
 #include <ESP8266httpUpdate.h>
+#endif
 #include <FS.h>
 #endif
 
@@ -31,7 +42,11 @@ class AssistenWiFi
   unsigned long lastExecutionTime = 0;
   char *hostname = "";
   String PlatName;
+#ifdef ESP32
+  WebServer webServer;
+#else
   ESP8266WebServer webServer;
+#endif
   AssistentAES myAes;
   String *CMD;
   HandlerCMD *HandlerCMDS;

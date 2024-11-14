@@ -110,6 +110,75 @@ void AssistenWiFi::hexStringToByteArray(const String &hexStr, byte *byteArray)
   }
 }
 #ifdef ASSISTENT_OTA
+#ifdef ESP32
+void AssistenWiFi::ReadOTA()
+{
+  String url = webServer.arg("url");
+  ASSISTENT_debugln("Получен URL: " + url);
+
+  webServer.send(200, "text/plain", "Update started");
+
+  ASSISTENT_debugln("Начало OTA обновления...");
+
+  HTTPClient http;
+  http.begin(url); // Подключаемся к URL
+  int httpCode = http.GET();
+
+  if (httpCode == HTTP_CODE_OK)
+  {
+    int contentLength = http.getSize();
+    bool canBegin = Update.begin(contentLength);
+
+    if (canBegin)
+    {
+      WiFiClient &client = http.getStream();
+
+      size_t written = Update.writeStream(client);
+      if (written == contentLength)
+      {
+        ASSISTENT_debugln("Прошивка успешно загружена!");
+      }
+      else
+      {
+        ASSISTENT_debugln("Записано только: " + String(written) + "/" + String(contentLength));
+      }
+
+      if (Update.end())
+      {
+        if (Update.isFinished())
+        {
+          ASSISTENT_debugln("Обновление успешно, перезагрузка...");
+          webServer.send(200, "text/plain", "Update Successful");
+          delay(100);
+          ESP.restart();
+        }
+        else
+        {
+          ASSISTENT_debugln("Ошибка завершения обновления!");
+          webServer.send(500, "text/plain", "Update Failed");
+        }
+      }
+      else
+      {
+        ASSISTENT_debugln("Ошибка обновления. Код ошибки: " + String(Update.getError()));
+        webServer.send(500, "text/plain", "Update Failed");
+      }
+    }
+    else
+    {
+      ASSISTENT_debugln("Недостаточно места для обновления");
+      webServer.send(500, "text/plain", "Not enough space for OTA update");
+    }
+  }
+  else
+  {
+    ASSISTENT_debugln("HTTP ошибка: " + String(httpCode));
+    webServer.send(500, "text/plain", "HTTP Update Failed");
+  }
+
+  http.end();
+}
+#else
 void AssistenWiFi::ReadOTA()
 {
   String url = webServer.arg("url");
@@ -138,6 +207,8 @@ void AssistenWiFi::ReadOTA()
     break;
   }
 }
+
+#endif
 #endif
 void AssistenWiFi::ASSISTENT_debugln(String Text)
 {
@@ -201,6 +272,7 @@ void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *Ha
 #endif
 
   PlatName = Name;
+  WiFi.setHostname(PlatName.c_str());
   WiFi.begin(ssid, password);
   ASSISTENT_debug("Connecting");
   while (WiFi.status() != WL_CONNECTED)
