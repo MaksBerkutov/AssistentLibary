@@ -1,10 +1,15 @@
 #include <BLEDevice.h>
 #include <BLEScan.h>
 #include <AssistentLibrary.h>
+#include <Types/DataVariable.h>
 
-String NameBoard = "esp32";
-String AesKey = "30555C24496F7F124026365948694E0F";
+String NameBoard = "PlatName";
+String AesKey = "AppKey";
+String TargetMac = "00:00:00:00:00:00";
+const char *SSID = "SSID";
+const char *PASSWORD = "PASSWORD";
 AssistenWiFi assistent;
+AssistentVariable::Variable variable;
 const long interval = 9500;
 bool deviceStatus = false;
 BLEScan *pBLEScan;
@@ -14,8 +19,6 @@ public:
   static unsigned long foundDevice;
   static float targetDistance;
   static int countScannig;
-
-  const char *targetMac = "44:40:73:b5:b5:e2";
 
   float calculateDistance(int rssi)
 
@@ -29,15 +32,9 @@ public:
   {
 
     float distance = calculateDistance((int)advertisedDevice.getRSSI());
-    Serial.printf("Устройство =  MAC-адрес: %s, RSSI: %d, Имя: %s, Дистанция: %f\n",
-                  advertisedDevice.getAddress().toString().c_str(),
-                  advertisedDevice.getRSSI(),
-                  advertisedDevice.getName().c_str(),
-                  distance);
 
-    if (advertisedDevice.getAddress().toString() == targetMac && distance <= targetDistance)
+    if (advertisedDevice.getAddress().toString() == TargetMac.c_str() && distance <= targetDistance)
     {
-      Serial.println("Целевое устройство найдено!");
       foundDevice = millis();
     }
   };
@@ -46,14 +43,9 @@ float MyAdvertisedDeviceCallbacks::targetDistance = 10.8f;
 int MyAdvertisedDeviceCallbacks::countScannig = 0;
 unsigned long MyAdvertisedDeviceCallbacks::foundDevice = 0;
 
-AssistentVariable GetState()
+AssistentVariable::Variable GetState(String arg)
 {
-  String keys[] = {
-      "state",
-      "devices",
-  };
-  String values[] = {String(MyAdvertisedDeviceCallbacks::targetDistance), deviceStatus ? "found" : "not found"};
-  return AssistentVariable(keys, values, 2);
+  return variable;
 }
 
 String cmdRecName[] = {"GetState"};
@@ -69,8 +61,8 @@ void setup()
   pBLEScan->setInterval(1000);
   pBLEScan->setWindow(500);
   pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  assistent.Begin(AesKey, NameBoard, nullptr, nullptr, 0, cmdRecName, cmdRec, 1, (char *)"DOM", (char *)"07012004");
-
+  assistent.Begin(AesKey, NameBoard, nullptr, nullptr, 0, cmdRecName, cmdRec, 1, SSID, PASSWORD);
+  variable["status"] = new AssistentVariable::Types::DataVariable("false");
   xTaskCreatePinnedToCore(
       bleScanTask,
       "BLE Scan Task",
@@ -113,14 +105,8 @@ void loop()
 
   if (dumpDevice != deviceStatus)
   {
-    Serial.println("#===========<DUMP>===========#");
-    Serial.printf("Интервал сканирования: %lu секунд\n", interval / 1000);
-    Serial.printf("Состояние устройства: %s\n", deviceStatus ? "активно" : "неактивно");
-    Serial.printf("Последнее отображение сканирования: %lu секунд\n", MyAdvertisedDeviceCallbacks::foundDevice / 1000);
-    Serial.printf("Ткущее время: %lu секунд\n", currentMillis / 1000);
-
-    String keys[] = {"status"};
-    String values[] = {deviceStatus ? "true" : "false"};
-    assistent.IoTMessage(AssistentVariable(keys, values, 1));
+    auto text = AssistentVariable::Variable::ToType<AssistentVariable::Types::DataVariable>(variable["status"]);
+    *(text) = deviceStatus ? "Found" : "Not Found";
+    assistent.IoTMessage(variable);
   }
 }

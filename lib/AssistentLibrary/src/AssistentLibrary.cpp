@@ -61,7 +61,7 @@ void AssistenWiFi::clear_eprom()
   EEPROM.commit();
   webServer.send(200, "text/plain", "EEPROM cleared");
 }
-String AssistenWiFi::StandartHandler(String str, bool &flag)
+String AssistenWiFi::StandartHandler(Package pack, bool &flag)
 {
   ASSISTENT_debug("IP EPROM Start");
   ASSISTENT_debugln(server_ip);
@@ -80,25 +80,25 @@ String AssistenWiFi::StandartHandler(String str, bool &flag)
     flag = false;
     return "Error rebind plate! Unauthorizted";
   }
-  String response = ThisStandartCommand(str);
+  String response = ThisStandartCommand(pack.Command);
 
   if (response.length() != 0)
     return response;
 
   for (int i = 0; i < SizeCMD; i++)
-    if (CMD[i] == str)
+    if (CMD[i] == pack.Command)
     {
-      HandlerCMDS[i]();
+      HandlerCMDS[i](pack.Arg);
       return "Succses";
     }
 
   for (int i = 0; i < SizeCMDRec; i++)
-    if ((CMDRec[i] + "_REC") == str)
-      return HandlerCMDSRec[i]().GetStringVal();
+    if ((CMDRec[i] + "_REC") == pack.Command)
+      return HandlerCMDSRec[i](pack.Arg).GetString();
   ASSISTENT_debugln("END StandartHandler");
 
   flag = false;
-  return "Not find command [" + str + "]";
+  return "Not find command [" + pack.Command + "]";
 }
 
 void AssistenWiFi::hexStringToByteArray(const String &hexStr, byte *byteArray)
@@ -224,9 +224,9 @@ void AssistenWiFi::ASSISTENT_debug(String Text)
 #endif
 }
 
-String AssistenWiFi::ThisStandartCommand(String str)
+String AssistenWiFi::ThisStandartCommand(String Command)
 {
-  if (strcmp(str.c_str(), "SERV_GAI") == 0)
+  if (strcmp(Command.c_str(), "SERV_GAI") == 0)
   {
 
     ASSISTENT_debug("DEBUG : ");
@@ -257,7 +257,7 @@ String AssistenWiFi::ThisStandartCommand(String str)
 
 void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *HandlerCMDS,
                          int SizeCMD, String *CMDRec, HandlerCMDRec *HandlerCMDSRec, int SizeCMDRec,
-                         char *ssid, char *password, int BhaudRate, OnNewMessageFromServer handler)
+                         const char *ssid, const char *password, int BhaudRate, OnNewMessageFromServer handler)
 {
   EEPROM.begin(1000);
   this->myAes.begin(AesKey);
@@ -303,10 +303,10 @@ void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *Ha
   webServer.begin();
 }
 
-void AssistenWiFi::IoTMessage(AssistentVariable data)
+void AssistenWiFi::IoTMessage(AssistentVariable::Variable data)
 {
 
-  String jsonResponse = "{" + myAes.encryptMessage(data.GetStringVal()) + ",\"name\":\"" + PlatName + "\"}";
+  String jsonResponse = "{" + myAes.encryptMessage(data.GetString()) + ",\"name\":\"" + PlatName + "\"}";
   LoadIpFromEprom();
   if (ValidateIP())
     SendPostRequest(("http://" + String(server_ip) + "/iot/receive").c_str(), jsonResponse.c_str());
@@ -386,18 +386,26 @@ void AssistenWiFi::Handle()
   webServer.handleClient();
 }
 
-String AssistenWiFi::decryptMessageFromJSON(String jsonMessage)
+Package AssistenWiFi::decryptMessageFromJSON(String jsonMessage)
 {
+  Package pack;
   DynamicJsonDocument doc(1024);
   deserializeJson(doc, jsonMessage);
   const char *encryptedMessage = doc["command"];
+  const char *encryptedArg = doc["arg"];
   String IV = doc["IV"];
   byte AESIV[16];
   myAes.hexStringToByteArray(IV, AESIV, 16);
-  ASSISTENT_debug("Message: ");
+  ASSISTENT_debug("Command: ");
   ASSISTENT_debugln(encryptedMessage);
-  String decryptedMessage = myAes.decryptMessage(encryptedMessage, AESIV);
+  ASSISTENT_debug("Argument: ");
+  ASSISTENT_debugln(encryptedArg);
+  pack.Arg = myAes.decryptMessage(encryptedArg, AESIV);
+  myAes.hexStringToByteArray(IV, AESIV, 16);
 
-  ASSISTENT_debugln("Decrypted message: " + decryptedMessage);
-  return decryptedMessage;
+  pack.Command = myAes.decryptMessage(encryptedMessage, AESIV);
+
+  ASSISTENT_debugln("Decrypted Command: " + pack.Command);
+  ASSISTENT_debugln("Decrypted Argument: " + pack.Arg);
+  return pack;
 }

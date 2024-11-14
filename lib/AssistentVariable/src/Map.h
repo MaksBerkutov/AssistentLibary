@@ -8,7 +8,6 @@ public:
   V value;
   ~KeyValuePair()
   {
-    delete value;
   }
   KeyValuePair(K _key, V _value) : key(_key), value(_value) {}
 
@@ -44,8 +43,6 @@ public:
     list.Append(newPair);
     return list.Last().value;
   }
-
-
 
   void insert(const K &key, const V &value)
   {

@@ -28,9 +28,12 @@
 #endif
 
 typedef void (*OnNewMessageFromServer)(String message);
-typedef void (*HandlerCMD)();
-typedef AssistentVariable (*HandlerCMDRec)();
-
+typedef void (*HandlerCMD)(String Arg);
+typedef AssistentVariable::Variable (*HandlerCMDRec)(String Arg);
+struct Package{
+  String Command;
+  String Arg;
+};
 class AssistenWiFi
 {
 #ifdef ASSISTENT_OTA
@@ -60,10 +63,10 @@ class AssistenWiFi
   bool ipLoaded = false;
 
 private:
-  String StandartHandler(String str, bool &flag);
+  String StandartHandler(Package pack, bool &flag);
   void hexStringToByteArray(const String &hexStr, byte *byteArray);
-  String decryptMessageFromJSON(String jsonMessage);
-  String ThisStandartCommand(String str);
+  Package decryptMessageFromJSON(String jsonMessage);
+  String ThisStandartCommand(String Command);
   String SendPostRequest(const char *url, const char *jsonPayload = nullptr);
 
   void LoadIpFromEprom(String SetIp = "");
@@ -82,9 +85,10 @@ public:
       : webServer(80)
   {
   }
-  void Begin(String AesKey, String Name, String *CMD, HandlerCMD *HandlerCMDS, int SizeCMD, String *CMDRec, HandlerCMDRec *HandlerCMDSRec, int SizeCMDRec, char *ssid, char *password, int BhaudRate = 9600, OnNewMessageFromServer handler = NULL);
+  void Begin(String AesKey, String Name, String *CMD, HandlerCMD *HandlerCMDS, int SizeCMD, String *CMDRec, HandlerCMDRec *HandlerCMDSRec,
+             int SizeCMDRec, const char *ssid, const char *password, int BhaudRate = 9600, OnNewMessageFromServer handler = NULL);
   void Reader();
   void Handle();
-  void IoTMessage(AssistentVariable data);
+  void IoTMessage(AssistentVariable::Variable data);
 };
 #endif
