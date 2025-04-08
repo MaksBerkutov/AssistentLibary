@@ -59,6 +59,7 @@ void AssistenWiFi::clear_eprom()
 {
   EEPROM.put(0, "AAA.AAA.AAA.AAA");
   EEPROM.commit();
+  this->cfg->Clear();
   webServer.send(200, "text/plain", "EEPROM cleared");
 }
 String AssistenWiFi::StandartHandler(Package pack, bool &flag)
@@ -80,7 +81,7 @@ String AssistenWiFi::StandartHandler(Package pack, bool &flag)
     flag = false;
     return "Error rebind plate! Unauthorizted";
   }
-  String response = ThisStandartCommand(pack.Command);
+  String response = ThisStandartCommand(pack);
 
   if (response.length() != 0)
     return response;
@@ -224,15 +225,16 @@ void AssistenWiFi::ASSISTENT_debug(String Text)
 #endif
 }
 
-String AssistenWiFi::ThisStandartCommand(String Command)
+String AssistenWiFi::ThisStandartCommand(Package pack)
 {
-  if (strcmp(Command.c_str(), "SERV_GAI") == 0)
+  if (strcmp(pack.Command.c_str(), "SERV_GAI") == 0)
   {
 
     ASSISTENT_debug("DEBUG : ");
     String msg(this->PlatName);
-    msg += '.';
-    msg += OTA ? "1" : "0";
+    msg += OTA ? ".1." : ".0.";
+    msg += this->CONFIGURE ? "1" : "0";
+
     // Command non send message
     for (int i = 0; i < SizeCMD; i++)
     {
@@ -249,6 +251,17 @@ String AssistenWiFi::ThisStandartCommand(String Command)
 
     return msg;
   }
+  else if (strcmp(pack.Command.c_str(), "SERV_GCFG") == 0)
+  {
+    ASSISTENT_debugln("Состояние конфигурации");
+    return this->cfg->GetJson();
+  }
+  else if (strcmp(pack.Command.c_str(), "SERV_SCFG") == 0)
+  {
+    this->cfg->Inject(pack.Arg);
+
+    return "Succesful";
+  }
   else
   {
     return "";
@@ -257,9 +270,35 @@ String AssistenWiFi::ThisStandartCommand(String Command)
 
 void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *HandlerCMDS,
                          int SizeCMD, String *CMDRec, HandlerCMDRec *HandlerCMDSRec, int SizeCMDRec,
-                         const char *ssid, const char *password, int BhaudRate, OnNewMessageFromServer handler)
+                         const char *ssid, const char *password, Config *cfg, int BhaudRate, OnNewMessageFromServer handler)
 {
+#ifdef ASSISTENT_DEBUG
+  Serial.begin(BhaudRate);
+#endif
   EEPROM.begin(1000);
+  if (cfg == nullptr)
+    this->cfg = new Config(new BaseConfig(), "");
+  else
+  {
+#ifdef ESP32
+    if (!LittleFS.begin(1024 * 1024))
+#else
+    if (!LittleFS.begin())
+
+#endif
+    {
+      Serial.println("Ошибка монтирования LittleFS");
+      return;
+    }
+    else
+    {
+      Serial.println("Файловая система успешно смонтирована");
+    }
+    this->cfg = cfg;
+    this->cfg->Load();
+    this->CONFIGURE = true;
+  }
+
   this->myAes.begin(AesKey);
   this->CMD = CMD;
   this->HandlerCMDS = HandlerCMDS;
@@ -267,9 +306,6 @@ void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *Ha
   this->CMDRec = CMDRec;
   this->HandlerCMDSRec = HandlerCMDSRec;
   this->SizeCMDRec = SizeCMDRec;
-#ifdef ASSISTENT_DEBUG
-  Serial.begin(BhaudRate);
-#endif
 
   PlatName = Name;
   WiFi.setHostname(PlatName.c_str());
@@ -371,7 +407,6 @@ void AssistenWiFi::Reader()
       webServer.send(400, "application/json", "{\"error\":\"" + responce + "\"}");
       return;
     }
-
     String msg = myAes.encryptMessage(responce);
     String jsonResponse = "{" + msg + "}";
     webServer.send(200, "application/json", jsonResponse);

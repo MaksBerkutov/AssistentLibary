@@ -48,7 +48,7 @@ String CMD[]{
 void setup()
 {
 
-  assistent.Begin(AesKey, NameBoard, CMD, HCmd, 6, CMDRec, HCmdRec, 1, SSID, PASSWORD);
+  assistent.Begin(AesKey, NameBoard, CMD, HCmd, 2, CMDRec, HCmdRec, 1, SSID, PASSWORD);
   variable["led"] = new AssistentVariable::Types::DataRele(PinLed);
   variable["Rele1"] = new AssistentVariable::Types::DataRele(ReleyPin1);
   variable["Rele2"] = new AssistentVariable::Types::DataRele(ReleyPin2);

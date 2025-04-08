@@ -9,7 +9,8 @@ namespace AssistentVariable
     {
       VARIABLE,
       LIST,
-      RELE
+      RELE,
+      TEMPERATURE
     };
     class IData
     {

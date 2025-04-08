@@ -4,7 +4,7 @@
 // CFG
 #define ASSISTENT_DEBUG
 // #define ASSISTENT_OTA
-
+#include "Config/src/Config.h"
 #include <ArduinoJson.h>
 #ifdef ESP32
 #include <HTTPClient.h>
@@ -30,7 +30,8 @@
 typedef void (*OnNewMessageFromServer)(String message);
 typedef void (*HandlerCMD)(String Arg);
 typedef AssistentVariable::Variable (*HandlerCMDRec)(String Arg);
-struct Package{
+struct Package
+{
   String Command;
   String Arg;
 };
@@ -41,6 +42,7 @@ class AssistenWiFi
 #else
   const bool OTA = false;
 
+  bool CONFIGURE = false;
 #endif
   unsigned long lastExecutionTime = 0;
   char *hostname = "";
@@ -61,12 +63,13 @@ class AssistenWiFi
   WiFiClient wifiClient;
   bool UsingStandartHandler = true;
   bool ipLoaded = false;
+  Config *cfg;
 
 private:
   String StandartHandler(Package pack, bool &flag);
   void hexStringToByteArray(const String &hexStr, byte *byteArray);
   Package decryptMessageFromJSON(String jsonMessage);
-  String ThisStandartCommand(String Command);
+  String ThisStandartCommand(Package pack);
   String SendPostRequest(const char *url, const char *jsonPayload = nullptr);
 
   void LoadIpFromEprom(String SetIp = "");
@@ -86,9 +89,10 @@ public:
   {
   }
   void Begin(String AesKey, String Name, String *CMD, HandlerCMD *HandlerCMDS, int SizeCMD, String *CMDRec, HandlerCMDRec *HandlerCMDSRec,
-             int SizeCMDRec, const char *ssid, const char *password, int BhaudRate = 9600, OnNewMessageFromServer handler = NULL);
+             int SizeCMDRec, const char *ssid, const char *password, Config *cfg = nullptr, int BhaudRate = 9600, OnNewMessageFromServer handler = NULL);
   void Reader();
   void Handle();
   void IoTMessage(AssistentVariable::Variable data);
+  Config *getConfig() { return this->cfg; }
 };
 #endif
