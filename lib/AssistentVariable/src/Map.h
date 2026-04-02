@@ -25,6 +25,21 @@ public:
   LinkedList<KeyValuePair<K, V>> list;
 
   int getLength() { return list.getLength(); }
+  V find(const K &key)
+  {
+    if (list.moveToStart())
+    {
+      do
+      {
+        if (list.getCurrent().key == key)
+        {
+          return list.getCurrent().value;
+        }
+      } while (list.next());
+    }
+
+    return NULL;
+  }
   V &operator[](const K &key)
   {
     if (list.moveToStart())

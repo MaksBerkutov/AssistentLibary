@@ -323,7 +323,7 @@ void AssistenWiFi::Begin(String AesKey, String Name, String *CMD, HandlerCMD *Ha
   ASSISTENT_debugln(WiFi.localIP().toString());
 
   // SetupHandler
-  if (handler == NULL)
+  if (handler != NULL)
   {
     this->handler = handler;
     UsingStandartHandler = false;
@@ -397,8 +397,14 @@ void AssistenWiFi::Reader()
 {
   if (webServer.hasArg("plain"))
   {
-
     String requestBody = webServer.arg("plain");
+    if (!UsingStandartHandler && this->handler != NULL)
+    {
+      this->handler(requestBody);
+      webServer.send(200, "application/json", "{\"status\":\"ok\"}");
+      return;
+    }
+
     bool responce_status = true;
     String responce = StandartHandler(decryptMessageFromJSON(requestBody), responce_status);
 
@@ -407,6 +413,7 @@ void AssistenWiFi::Reader()
       webServer.send(400, "application/json", "{\"error\":\"" + responce + "\"}");
       return;
     }
+
     String msg = myAes.encryptMessage(responce);
     String jsonResponse = "{" + msg + "}";
     webServer.send(200, "application/json", jsonResponse);

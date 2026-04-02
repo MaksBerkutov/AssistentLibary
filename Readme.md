@@ -1,195 +1,360 @@
-# Библиотека Assistent для ESP8266
+# AssistentLibrary
 
-Библиотека предназначенна для работы с [Assistent Web Server](https://github.com/MaksBerkutov/PhpAssistent), облегчает разработку IoT систем. 
+Библиотека для ESP8266/ESP32, которая связывает прошивку устройства с [Assistent Web Server](https://github.com/MaksBerkutov/PhpAssistent).
 
-Основные задчи:
- - [x] Удобство разрботки
- - [x] Шифрование всех сообщений
- - [x] Возможность создания триггеров
- - [x] Быстрое конфигуриования с помощью директив препроцессора
-   
+Сейчас у библиотеки есть два уровня API:
+
+- `AssistentEasy` — максимально простой слой для обычных скетчей
+- `AssistentLibrary` — низкоуровневый API, если нужен полный контроль над командами и обработчиками
+
+Подробный список последних изменений лежит в [CHANGELOG.md](./CHANGELOG.md).
+
+## Что выбрать
+
+Используйте `AssistentEasy`, если хотите писать короткий скетч без массивов команд, ручного `new` и упаковки данных.
+
+Используйте `AssistentLibrary`, если вам нужен старый стиль работы через `CMD`, `HandlerCMD`, `CMDRec`, `HandlerCMDRec` и прямой доступ к `AssisenWiFi`.
 
 ## Возможности
 
-- **Управление WiFi:** Подключение и поддержка подключения к WiFi для ESP8266.
-- **OTA обновления:** Поддержка обновлений прошивки по воздуху.
-- **AES шифрование:** Обработка безопасного шифрования и дешифрования сообщений.
-- **Обработка команд:** Обработка входящих команд и выполнение соответствующих действий.
+- Wi-Fi для ESP8266 и ESP32
+- Прием команд от сервера
+- Команды с ответом и без ответа
+- Отправка телеметрии на сервер
+- AES-шифрование сообщений
+- OTA-обновление через макрос `ASSISTENT_OTA`
+- Упрощенный фасад `AssistentEasy` для коротких скетчей
 
-## Требования
+## Зависимости
 
-- **ESP8266**: Для использования этой библиотеки необходимо устройство ESP8266.
-- **Arduino IDE**: Убедитесь, что у вас настроена Arduino IDE для разработки под ESP8266.
-- **Библиотеки**:
-  - [**`ArduinoJson`**](https://github.com/bblanchon/ArduinoJson)
-  - [**`AESLib`**](https://github.com/DavyLandman/AESLib)
-  - [**`base64_encode`**](https://github.com/Densaugeo/base64_arduino)
+В `PlatformIO` используются такие зависимости:
 
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+- [AESLib](https://github.com/DavyLandman/AESLib)
+- [base64_arduino](https://github.com/Densaugeo/base64_arduino)
+- [DHT sensor library](https://github.com/adafruit/DHT-sensor-library)
 
-## Установка
-Для PlatformIO просто клонируйте репозиторий и пишете скетч в `main.cpp`.
+Актуальный пример конфигурации лежит в [platformio.ini](/C:/OSPanel/home/AssistentLibary/AssistentLibary/platformio.ini).
 
-Для ArduinoIDE скопируйте файлы из `/lib` в  папку `~/Arduino/libraries`  и подключите его в вашем скетче следующим образом:
+## Макросы
 
 ```cpp
-#include <Assistent.h>
+#define ASSISTENT_DEBUG
+// #define ASSISTENT_OTA
 ```
 
-## Конфигурация
+`ASSISTENT_DEBUG` включает сообщения в `Serial`.
 
-В начале вашего скетча вы можете включать или отключать функции с помощью следующих директив препроцессора:
+`ASSISTENT_OTA` включает endpoint для OTA-обновлений.
+
+## Быстрый старт
+
+### Реле
+
+Это самый короткий вариант скетча для управления реле:
 
 ```cpp
-#define ASSISTENT_DEBUG   // Включить сообщения отладки
-#define ASSISTENT_OTA     // Включить OTA обновления
+#include <AssistentEasy.h>
+
+AssistentRelayDevice device(
+    "RoomLight",
+    "00112233445566778899AABBCCDDEEFF",
+    "SSID",
+    "PASSWORD");
+
+void setup()
+{
+  device.addRelay("led", 2);
+  device.addRelay("pump", 5);
+  device.begin();
+}
+
+void loop()
+{
+  device.run();
+}
 ```
 
-## Пример использования
+Готовый файл: [EasyRelay.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/examples/Easy/EasyRelay.cpp).
+
+### Климат
+
+Пример с DHT22:
 
 ```cpp
-#include <Assistent.h>
+#include <AssistentEasy.h>
 
-AssistenWiFi assistant;
+AssistentClimateDevice device(
+    "ClimateNode",
+    "00112233445566778899AABBCCDDEEFF",
+    "SSID",
+    "PASSWORD");
 
-void setup() {
-  // Инициализация ассистента
+void setup()
+{
+  device.addDht22("room", 4);
+  device.begin();
+}
+
+void loop()
+{
+  device.run();
+}
+```
+
+Готовый файл: [EasyClimate.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/examples/Easy/EasyClimate.cpp).
+
+## AssistentEasy API
+
+Подключение:
+
+```cpp
+#include <AssistentEasy.h>
+```
+
+Основные классы:
+
+- `AssistentRelayDevice`
+- `AssistentClimateDevice`
+- `AssistentEasyDevice`
+
+### Конструктор
+
+```cpp
+AssistentRelayDevice device(name, aesKey, ssid, password, baudRate);
+```
+
+Параметры:
+
+- `name` — имя устройства
+- `aesKey` — AES-ключ в hex-формате, 16 байт
+- `ssid` — имя Wi-Fi сети
+- `password` — пароль Wi-Fi
+- `baudRate` — скорость `Serial`, по умолчанию `9600`
+
+### Методы AssistentEasyDevice
+
+- `begin()` — инициализация Wi-Fi, сервера и внутренних обработчиков
+- `run()` — вызывать в `loop()`
+- `sendState()` — отправить текущее состояние на сервер
+- `set(key, value)` — записать строковое значение в состояние устройства
+- `values()` — получить ссылку на внутренний `AssistentVariable::Variable`
+- `on(command, handler)` — зарегистрировать команду без ответа
+- `onRequest(command, handler)` — зарегистрировать команду с ответом
+- `relay(name)` — получить объект-обертку для управления реле по имени
+
+### Методы AssistentRelayDevice
+
+- `addRelay(name, pin)` — добавить реле
+
+Автоматически регистрируются команды:
+
+- `ON`
+- `OFF`
+- `TOGGLE`
+- `STATE`
+
+Примеры:
+
+```cpp
+device.addRelay("fan", 14);
+device.set("mode", "auto");
+device.sendState();
+```
+
+```cpp
+device.relay("fan").on();
+device.relay("fan").toggle();
+```
+
+### Методы AssistentClimateDevice
+
+- `addDht22(name, pin)` — добавить датчик DHT22
+
+Автоматически регистрируется команда:
+
+- `STATE`
+
+### Кастомные команды в AssistentEasy
+
+Если нужен простой пользовательский хендлер без перехода на старый API:
+
+```cpp
+#include <AssistentEasy.h>
+
+AssistentRelayDevice device(
+    "Node",
+    "00112233445566778899AABBCCDDEEFF",
+    "SSID",
+    "PASSWORD");
+
+void Ping(String arg)
+{
+  device.set("last_ping", arg);
+}
+
+AssistentVariable::Variable ReadState(String arg)
+{
+  return device.values();
+}
+
+void setup()
+{
+  device.addRelay("led", 2);
+  device.on("PING", Ping);
+  device.onRequest("GET_ALL", ReadState);
+  device.begin();
+}
+
+void loop()
+{
+  device.run();
+}
+```
+
+### Ограничения AssistentEasy
+
+- Один `AssistentEasy`-девайс на один скетч
+- Максимум `12` команд без ответа
+- Максимум `12` команд с ответом
+- Максимум `12` зарегистрированных реле
+
+Эти ограничения заданы в [AssistentEasy.h](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentLibrary/src/AssistentEasy.h).
+
+## Низкоуровневый API
+
+Если нужен старый стиль, используйте:
+
+```cpp
+#include <AssistentLibrary.h>
+```
+
+Основная точка входа — класс `AssisenWiFi`.
+
+Сигнатуры обработчиков:
+
+- Команды без ответа: `void Handler(String Arg)`
+- Команды с ответом: `AssistentVariable::Variable Handler(String Arg)`
+
+Минимальный пример:
+
+```cpp
+#include <AssistentLibrary.h>
+#include <Types/DataRele.h>
+
+String CMD[] = {"ON", "OFF"};
+String CMDRec[] = {"GetState"};
+
+AssisenWiFi assistant;
+AssistentVariable::Variable variable;
+
+void ON(String arg)
+{
+  auto rele = AssistentVariable::Variable::ToType<AssistentVariable::Types::DataRele>(variable[arg]);
+  if (rele != nullptr)
+    rele->ON();
+}
+
+void OFF(String arg)
+{
+  auto rele = AssistentVariable::Variable::ToType<AssistentVariable::Types::DataRele>(variable[arg]);
+  if (rele != nullptr)
+    rele->OFF();
+}
+
+AssistentVariable::Variable GetState(String arg)
+{
+  return variable;
+}
+
+HandlerCMD HCmd[] = {ON, OFF};
+HandlerCMDRec HCmdRec[] = {GetState};
+
+void setup()
+{
   assistant.Begin(
-    "your_AES_key",            // AES ключ
-    "YourDeviceName",          // Имя устройства
-    CMD,                       // Список команд
-    HandlerCMDS,               // Обработчики команд
-    CMD_SIZE,                  // Размер списка команд
-    CMD_REC,                   // Список команд ответа
-    HandlerCMDSRec,            // Обработчики команд ответа
-    CMD_REC_SIZE,              // Размер списка ответа
-    "your_wifi_ssid",          // SSID WiFi
-    "your_wifi_password",      // Пароль WiFi
-    9600,                      // Скорость передачи (бод). Стандартное занчение 9600
-    NULL                       // Кастомный обработчик сообщений. Стандартное занчение NULL
-  );
+      "00112233445566778899AABBCCDDEEFF",
+      "DeviceName",
+      CMD,
+      HCmd,
+      2,
+      CMDRec,
+      HCmdRec,
+      1,
+      "your_wifi_ssid",
+      "your_wifi_password");
+
+  variable["led"] = new AssistentVariable::Types::DataRele(2);
 }
 
-void loop() {
-  // Поддерживаем работу ассистента
+void loop()
+{
   assistant.Handle();
 }
 ```
-## Отправка на Web Server сигнала
+
+Файл API: [AssistentLibrary.h](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentLibrary/src/AssistentLibrary.h).
+
+### Параметры Begin
 
 ```cpp
-#include <Assistent.h>
-
-AssistenWiFi assistant;
-
-void setup() {
-  //initialize
-}
-
-void loop() {
-
-  assistant.Handle();
-
-  if(/*Ваш тригегер например нажатие кнопки*/)
-    assistent.IoTMessage(AssistentVariable(new String[1] { "KEY"},new String[1] {"VALUE"},1));
-    //Можно отправлять несколько пар ключ-значений. Логику обработки настривавть на Web сервере в вкладке сценарии.
-    //Где нужно будет указать установленную ключ пару.
-
-}
+Begin(
+  aesKey,
+  name,
+  CMD,
+  HandlerCMDS,
+  sizeCMD,
+  CMDRec,
+  HandlerCMDSRec,
+  sizeCMDRec,
+  ssid,
+  password,
+  cfg,
+  baudRate,
+  handler)
 ```
-## Команды
-### Без ответа
-Команды без ответа заставляют модуль сделать что-то к примеру:
-- включить/выключить реле, светодиод.
-- отправить сообщение на сервер/плату
-- и тд. и тп. 
-  
-Пример создания
-  ```cpp
-void ON() //Обработчки коммады ON
-{
-  State = true;
-  digitalWrite(PinLed, LOW);
-}
-void OFF()  //Обработчки коммады OFF
-{
-  State = false;
-  digitalWrite(PinLed, HIGH);
-}
 
+Параметры:
 
-HandlerCMD HCmd[]{  //Массив обработчиков который пердаём в begin
-    ON,
-    OFF
-};
+- `aesKey` — AES-ключ
+- `name` — имя устройства
+- `CMD` — массив команд без ответа
+- `HandlerCMDS` — массив обработчиков команд без ответа
+- `sizeCMD` — размер массива `CMD`
+- `CMDRec` — массив команд с ответом
+- `HandlerCMDSRec` — массив обработчиков команд с ответом
+- `sizeCMDRec` — размер массива `CMDRec`
+- `ssid` — Wi-Fi SSID
+- `password` — Wi-Fi пароль
+- `cfg` — объект конфигурации, опционально
+- `baudRate` — скорость `Serial`
+- `handler` — кастомный обработчик входящих сообщений
 
-String CMD[]{ //Массив названий который пердаём в begin
-    "ON", //Название комманды для обработчика ON
-    "OFF" //Название комманды для обработчика OFF
-}; 
-  ```
-При создании нужно руководстваться парой правил.
+## Встроенные команды протокола
 
-- Обрабочик обязательно должен быть типа void без парметров **`void name()`**
-- Названия как функций так и команд могут быть произвольные главное что бы **индексы совпадали**
-  - К 0 индексу в массиве названий команд всегда будет вызван 0 индекс из массива обработчик комманд.
-- Длина массивов должна быть одинаковая, сколько комманд столько и названий.
+- `SERV_GAI` — получить информацию об устройстве и доступных командах
+- `SERV_GCFG` — получить конфигурацию
+- `SERV_SCFG` — обновить конфигурацию
 
-Когда данные приходят с сервера, модуль их дешифрует, извлекая команду.
+## Что изменилось
 
-1) Сначала модуль проверяет команду на совпадение с зарезервированными командами, которые определены в прошивке.
-2) Если совпадение не найдено, модуль проверяет команду на соответствие с вашим пользовательским массивом команд.
-3) Если команда найдена в пользовательском массиве, вызывается соответствующий обработчик для выполнения действия.
-4) Если команда не найдена ни в зарезервированных, ни в пользовательских командах, модуль отправляет ошибку в ответ на запрос с сообщением о неверной команде.
----
-#### График:
+Кратко:
 
-```mermaid
-graph LR
-A((Web Server)) -- Crypted data --> B[ESP Module]
-B -- Decrypted data--> C(Handler)
-C --> D{Standart?}
-D -- Yes --> X(Handling) -- Crypted Data --> A
-D -- No --> F{User?}
-F-- Yes --> X
-F -- No --> Error -- Error Data -->A
+- появился новый фасад `AssistentEasy`
+- добавлены готовые easy-примеры
+- исправлены баги в контейнерах и маршрутизации команд
+- улучшена переносимость `PlatformIO`
+- переписаны тесты и документация
+
+Полный список изменений смотрите в [CHANGELOG.md](./CHANGELOG.md).
+
+## Тестирование
+
+Запуск тестов:
+
+```bash
+pio test
 ```
-### Команды с ответом
-Основная разница в сравнении с коммандами без ответов в том что сервер понимает что должен получить результат. Это нужно для:
-- Опроса датчиков
-- Получения состояние реле
-- Получения значений в EEPROM
-- и тд. и тп. 
-
-Резльтат представлен в виде `Ключ=>Значения`. Для упрощению разработчки везде используеться клас **AssistentVariable** который берёт на себя задчу корректной упаковки занчений. Со стоорноый разрабочткика резульатом функции нужно вернуть экземпляр данного класса. 
-
-Пример:
-  ```cpp
-AssistentVariable GetStateLed()
-{
-  return AssistentVariable(new String[1]{"State"}, new String[1]{State?"true":"false"}, 1);
-}
-HandlerCMDRec HCmdRec[]{  //Массив обработчиков который пердаём в begin
-    GetStateLed
-};
-String CMDRec[] = { //Массив названий который пердаём в begin
-    "GetStateLed" // Название комманды для обработчика GetState 
-};
-  ```
-  Логика та же только мы отправляем не просто что поняли команду, или команда не найдена. А запакованный массив ключ значений.
-#### График:
-
-```mermaid
-graph LR
-A((Web Server)) -- Crypted data --> B[ESP Module]
-B -- Decrypted data--> C(Handler)
-C --> D{Standart?}
-D -- Yes --> X(Handling)-->S(Pack AssistentVariable) -- Crypted Data --> A
-D -- No --> F{User?}
-F-- Yes --> X
-F -- No --> Error -- Error Data -->A
-```
-## Лицензия
-Этот проект лицензируется на условиях MIT License. 
 
 ## Контакты
 
@@ -199,4 +364,6 @@ F -- No --> Error -- Error Data -->A
 - [GitHub](https://github.com/MaksBerkutov)
 - [Email](mailto:0701200maks@gmail.com)
 
+## Лицензия
 
+MIT
