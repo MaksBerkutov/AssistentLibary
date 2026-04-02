@@ -235,8 +235,20 @@ GitHub Actions больше не пытается запускать `pio test` 
 - [test_easy_api_compile.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/test/test_easy_api_compile.cpp)
 - [test_main.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/test/test_main.cpp)
 
+### 18. Исправлен include для `base64_arduino`
+
+В `AssistentAES.h` использовалось неверное имя заголовка `arduino_base64.hpp`, из-за чего CI не мог собрать проект после установки зависимости `base64_arduino`.
+
+Теперь используется корректный include:
+
+- `base64_arduino.hpp`
+
+Файл:
+
+- [AssistentAES.h](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentAES/src/AssistentAES.h)
+
 ## Что не менялось
 
-- `AssistentAES` не изменялся
+- криптографическая логика `AssistentAES` не изменялась
 - старый low-level API `AssistenWiFi` сохранен
 - старые примеры и существующий стиль использования не удалялись
