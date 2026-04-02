@@ -14,7 +14,7 @@
 
 Используйте `AssistentEasy`, если хотите писать короткий скетч без массивов команд, ручного `new` и упаковки данных.
 
-Используйте `AssistentLibrary`, если вам нужен старый стиль работы через `CMD`, `HandlerCMD`, `CMDRec`, `HandlerCMDRec` и прямой доступ к `AssisenWiFi`.
+Используйте `AssistentLibrary`, если вам нужен старый стиль работы через `CMD`, `HandlerCMD`, `CMDRec`, `HandlerCMDRec` и прямой доступ к `AssistenWiFi`.
 
 ## Возможности
 
@@ -230,7 +230,7 @@ void loop()
 #include <AssistentLibrary.h>
 ```
 
-Основная точка входа — класс `AssisenWiFi`.
+Основная точка входа — класс `AssistenWiFi`.
 
 Сигнатуры обработчиков:
 
@@ -246,7 +246,7 @@ void loop()
 String CMD[] = {"ON", "OFF"};
 String CMDRec[] = {"GetState"};
 
-AssisenWiFi assistant;
+AssistenWiFi assistant;
 AssistentVariable::Variable variable;
 
 void ON(String arg)

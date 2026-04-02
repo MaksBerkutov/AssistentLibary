@@ -62,7 +62,7 @@ protected:
   void setRelayState(const String &name, bool enabled);
   void toggleRelay(const String &name);
 
-  AssisenWiFi device;
+  AssistenWiFi device;
   AssistentVariable::Variable variable;
   String deviceName;
   String aesKey;

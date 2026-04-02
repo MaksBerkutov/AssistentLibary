@@ -238,5 +238,5 @@ GitHub Actions больше не пытается запускать `pio test` 
 ## Что не менялось
 
 - `AssistentAES` не изменялся
-- старый low-level API `AssisenWiFi` сохранен
+- старый low-level API `AssistenWiFi` сохранен
 - старые примеры и существующий стиль использования не удалялись
