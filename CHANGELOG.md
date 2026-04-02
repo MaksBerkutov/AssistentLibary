@@ -204,6 +204,21 @@
 
 - [platformio.ini](/C:/OSPanel/home/AssistentLibary/AssistentLibary/platformio.ini)
 
+### 16. CI адаптирован для embedded-сборки без физической платы
+
+GitHub Actions больше не пытается запускать `pio test` как полноценный upload/run цикл на `nodemcuv2`, что неработоспособно в облаке без подключенного устройства.
+
+Теперь CI:
+
+- собирает прошивку через `pio run`
+- отдельно собирает unit-test firmware через `pio test --without-uploading --without-testing`
+
+Файлы:
+
+- [ci.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/ci.yml)
+- [Readme.md](/C:/OSPanel/home/AssistentLibary/AssistentLibary/Readme.md)
+- [VERSIONING.md](/C:/OSPanel/home/AssistentLibary/AssistentLibary/VERSIONING.md)
+
 ## Что не менялось
 
 - `AssistentAES` не изменялся
