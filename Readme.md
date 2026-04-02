@@ -359,8 +359,8 @@ Begin(
 Что делает `CI`:
 
 - валидирует версию в `library.json`
-- запускает `pio run` для `nodemcuv2`
-- собирает unit-test firmware через `pio test --without-uploading --without-testing`
+- собирает library test firmware через `pio test --without-uploading --without-testing`
+- проверяет компиляцию low-level API и `AssistentEasy` через тестовые файлы
 
 Что делает `Release`:
 

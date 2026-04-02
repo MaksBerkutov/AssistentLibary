@@ -210,14 +210,30 @@ GitHub Actions больше не пытается запускать `pio test` 
 
 Теперь CI:
 
-- собирает прошивку через `pio run`
-- отдельно собирает unit-test firmware через `pio test --without-uploading --without-testing`
+- собирает library test firmware через `pio test --without-uploading --without-testing`
+- проверяет компиляцию библиотечного API через тестовые файлы
 
 Файлы:
 
 - [ci.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/ci.yml)
 - [Readme.md](/C:/OSPanel/home/AssistentLibary/AssistentLibary/Readme.md)
 - [VERSIONING.md](/C:/OSPanel/home/AssistentLibary/AssistentLibary/VERSIONING.md)
+
+### 17. Добавлен compile-smoke тест для `AssistentEasy`
+
+Чтобы CI проверял не только старый low-level API, но и новый упрощенный фасад, добавлен отдельный тестовый файл, который компилирует:
+
+- `AssistentRelayDevice`
+- `AssistentClimateDevice`
+- `on(...)`
+- `onRequest(...)`
+- `set(...)`
+- `relay(...)`
+
+Файлы:
+
+- [test_easy_api_compile.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/test/test_easy_api_compile.cpp)
+- [test_main.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/test/test_main.cpp)
 
 ## Что не менялось
 

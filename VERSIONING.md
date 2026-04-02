@@ -51,8 +51,8 @@ Workflow [ci.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workf
 - запускается на `push` в `dev` и `main`
 - запускается на `pull_request` в `dev` и `main`
 - валидирует формат версии в `library.json`
-- запускает `pio run` для `nodemcuv2`
-- собирает unit-test firmware без upload и запуска на железе
+- собирает test firmware через `pio test --without-uploading --without-testing`
+- проверяет компиляцию API библиотеки через тестовые файлы
 
 ### Релиз
 

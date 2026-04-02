@@ -10,11 +10,13 @@ void tearDown()
 }
 extern void runTestDecrypt();
 extern void runTestValidateIP();
+extern void runTestEasyCompile();
 void RUN_UNITY_TESTS()
 {
   UNITY_BEGIN();
   runTestDecrypt();
   runTestValidateIP();
+  runTestEasyCompile();
   UNITY_END();
 }
 #ifdef ARDUINO
