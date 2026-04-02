@@ -196,6 +196,14 @@
 
 - [library.json](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentLibrary/library.json)
 
+### 15. Исправлена установка `AESLib` в CI
+
+`PlatformIO Registry` не находил зависимость `davylandman/AESLib @ ^2.2.1`, из-за чего GitHub Actions падал ещё до сборки тестов. Зависимость переведена на прямое подключение из GitHub-репозитория.
+
+Файл:
+
+- [platformio.ini](/C:/OSPanel/home/AssistentLibary/AssistentLibary/platformio.ini)
+
 ## Что не менялось
 
 - `AssistentAES` не изменялся
