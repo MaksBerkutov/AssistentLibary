@@ -180,7 +180,7 @@ bool LinkedList<T>::prev()
   if (length == 0)
     return false;
 
-  if (curr->prev != nullptr)
+  if (curr->prev == nullptr)
     return false;
 
   curr = curr->prev;

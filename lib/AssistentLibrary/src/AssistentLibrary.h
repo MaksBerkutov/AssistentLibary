@@ -41,9 +41,8 @@ class AssistenWiFi
   const bool OTA = true;
 #else
   const bool OTA = false;
-
-  bool CONFIGURE = false;
 #endif
+  bool CONFIGURE = false;
   unsigned long lastExecutionTime = 0;
   char *hostname = "";
   String PlatName;

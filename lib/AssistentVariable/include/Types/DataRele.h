@@ -40,6 +40,11 @@ namespace AssistentVariable
         }
       }
 
+      bool IsOn() const
+      {
+        return this->Value;
+      }
+
       void SetName(String Name)
       {
         this->Name = Name;

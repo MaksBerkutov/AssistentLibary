@@ -74,6 +74,5 @@ void runTestValidateIP()
   RUN_TEST(test_ValidateIP_non_digit_characters);
   RUN_TEST(test_ValidateIP_starting_with_dot);
   RUN_TEST(test_ValidateIP_more_than_three_dots);
-  RUN_TEST(test_ValidateIP_starting_with_dot);
   RUN_TEST(test_ValidateIP_less_than_three_dots);
 }
