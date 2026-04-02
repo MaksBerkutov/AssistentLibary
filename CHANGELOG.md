@@ -2,6 +2,10 @@
 
 Этот файл описывает изменения, которые были внесены в текущую рабочую версию библиотеки.
 
+Текущая целевая версия:
+
+- `0.1.0`
+
 ## Новое
 
 ### 1. Добавлен упрощенный фасад `AssistentEasy`
@@ -146,6 +150,51 @@
 
 - [EasyRelay.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/examples/Easy/EasyRelay.cpp)
 - [EasyClimate.cpp](/C:/OSPanel/home/AssistentLibary/AssistentLibary/examples/Easy/EasyClimate.cpp)
+
+### 12. Добавлены GitHub Actions для CI и release
+
+Добавлены workflow'ы:
+
+- проверка версии и тестов на `dev` и `main`
+- автоматический релиз на тегах `vX.Y.Z`
+
+Что делает CI:
+
+- проверяет формат версии в `library.json`
+- запускает `pio test` для `nodemcuv2`
+
+Что делает release workflow:
+
+- проверяет совпадение git-тега и версии из `library.json`
+- проверяет, что тег указывает на коммит из `main`
+- публикует GitHub Release
+- прикладывает zip-архив исходников
+
+Файлы:
+
+- [ci.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/ci.yml)
+- [release.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/release.yml)
+
+### 13. Добавлена документация по версионированию
+
+Появился отдельный документ с правилами:
+
+- работаем в `dev`
+- стабилизируем в `main`
+- релизы создаем тегами `vX.Y.Z`
+- версия в теге должна совпадать с `library.json`
+
+Файл:
+
+- [VERSIONING.md](/C:/OSPanel/home/AssistentLibary/AssistentLibary/VERSIONING.md)
+
+### 14. Версия библиотеки обновлена до `0.1.0`
+
+Версия в манифесте библиотеки поднята до `0.1.0` как базовая точка для нового API и релизного процесса.
+
+Файл:
+
+- [library.json](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentLibrary/library.json)
 
 ## Что не менялось
 

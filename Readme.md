@@ -8,6 +8,7 @@
 - `AssistentLibrary` — низкоуровневый API, если нужен полный контроль над командами и обработчиками
 
 Подробный список последних изменений лежит в [CHANGELOG.md](./CHANGELOG.md).
+Правила версионирования и релизов описаны в [VERSIONING.md](./VERSIONING.md).
 
 ## Что выбрать
 
@@ -347,6 +348,43 @@ Begin(
 - переписаны тесты и документация
 
 Полный список изменений смотрите в [CHANGELOG.md](./CHANGELOG.md).
+
+## CI/CD
+
+В репозитории настроены GitHub Actions:
+
+- [ci.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/ci.yml) — проверки на `push` и `pull_request` для `dev` и `main`
+- [release.yml](/C:/OSPanel/home/AssistentLibary/AssistentLibary/.github/workflows/release.yml) — автоматический релиз на тегах `vX.Y.Z`
+
+Что делает `CI`:
+
+- валидирует версию в `library.json`
+- запускает `pio test` для `nodemcuv2`
+
+Что делает `Release`:
+
+- проверяет, что тег совпадает с версией из `library.json`
+- проверяет, что тег указывает на коммит из `main`
+- создает GitHub Release
+- прикладывает zip-архив исходников
+
+## Версионирование
+
+Используется простая схема:
+
+- `dev` — вся текущая разработка
+- `main` — стабильное состояние
+- `vX.Y.Z` — релизный тег
+
+Источник истины для версии:
+
+- [library.json](/C:/OSPanel/home/AssistentLibary/AssistentLibary/lib/AssistentLibrary/library.json)
+
+Текущая целевая версия библиотеки:
+
+- `0.1.0`
+
+Подробные правила лежат в [VERSIONING.md](./VERSIONING.md).
 
 ## Тестирование
 

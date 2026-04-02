@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-version:
+    name: Validate Version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate library.json version
+        run: |
+          python - <<'PY'
+          import json
+          import re
+
+          with open("lib/AssistentLibrary/library.json", "r", encoding="utf-8") as fp:
+              version = json.load(fp)["version"]
+
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              raise SystemExit(f"library.json version must use SemVer X.Y.Z, got: {version}")
+
+          print(f"Detected library version: {version}")
+          PY
+
+  platformio-tests:
+    name: PlatformIO Tests (${{ matrix.environment }})
+    runs-on: ubuntu-latest
+    needs: validate-version
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - nodemcuv2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+            ~/.platformio/packages
+          key: ${{ runner.os }}-platformio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-platformio-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Run tests
+        run: pio test -e ${{ matrix.environment }}
